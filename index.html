@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>わり算ひっ算 たんけんマップ｜にがてを さがしに いこう</title>
+<style>
+/* ============================================================
+   わり算ひっ算 たんけんマップ
+   デザイン：算数ノート（方眼＋朱色のマージン線）＋ 赤ペンの○つけ
+   ============================================================ */
+:root{
+  --ink:#1f2a44;          /* ふでペン青 */
+  --ink-60:rgba(31,42,68,.60);
+  --ink-35:rgba(31,42,68,.35);
+  --ink-12:rgba(31,42,68,.12);
+  --paper:#fbfcfa;        /* 方眼ノートの白 */
+  --grid:rgba(31,42,68,.055);
+  --shu:#e5484d;          /* 朱色：まるつけ・マージン線 */
+  --mizu:#2f9e8f;         /* あおみどり：せいかい */
+  --yamabuki:#f2b230;     /* 星・えんぴつ */
+  --fuji:#6f5cd0;         /* ボス */
+  --font-ui:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic","Meiryo",system-ui,-apple-system,sans-serif;
+  --font-num:ui-monospace,SFMono-Regular,Menlo,Consolas,"Roboto Mono","Courier New",monospace;
+  --r:20px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--font-ui);
+  color:var(--ink);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px,22px 22px;
+  font-size:17px;
+  line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:99}
+
+/* ---------- ノートのページ ---------- */
+.nb{
+  position:relative;
+  max-width:760px;
+  margin:0 auto;
+  min-height:100vh;
+  padding:0 clamp(14px,4vw,30px) 60px clamp(46px,10vw,64px);
+}
+.nb::before{ /* 朱色のマージン線 */
+  content:"";position:absolute;left:clamp(22px,5.5vw,34px);top:0;bottom:0;width:2px;
+  background:rgba(229,72,77,.30);
+}
+
+/* ---------- ヘッダー（HUD） ---------- */
+.hud{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;gap:10px;
+  padding:12px 0 10px;
+  background:linear-gradient(var(--paper) 78%,rgba(251,252,250,0));
+  backdrop-filter:blur(2px);
+}
+.hud-t{flex:1;min-width:0}
+.hud-title{
+  font-size:.82rem;font-weight:800;letter-spacing:.02em;color:var(--ink-60);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.bar{height:9px;border-radius:9px;background:var(--ink-12);margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:9px;background:var(--mizu);transition:width .45s cubic-bezier(.3,1.4,.5,1)}
+.hud-r{display:flex;align-items:center;gap:6px;flex:none}
+.pill{
+  font-family:var(--font-num);font-weight:700;font-size:.82rem;
+  background:#fff;border:2px solid var(--ink);border-radius:999px;
+  padding:3px 10px;white-space:nowrap;
+  box-shadow:0 2px 0 var(--ink-12);
+}
+.mini{
+  width:38px;height:38px;border-radius:12px;border:2px solid var(--ink);background:#fff;
+  font-size:1rem;cursor:pointer;line-height:1;box-shadow:0 2px 0 var(--ink-12);
+  display:flex;align-items:center;justify-content:center;padding:0;color:var(--ink);
+}
+.mini:active{transform:translateY(2px);box-shadow:none}
+.mini.off{opacity:.38}
+
+/* ---------- カード ---------- */
+.card{
+  background:#fff;border:2.5px solid var(--ink);border-radius:var(--r);
+  padding:18px 18px 20px;margin:0 0 16px;
+  box-shadow:0 5px 0 var(--ink-12);
+  animation:rise .34s cubic-bezier(.2,1.2,.4,1) both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.card.accent{border-left:11px solid var(--yamabuki)}
+h1{font-size:clamp(1.42rem,5.6vw,1.85rem);line-height:1.45;margin:0 0 6px;letter-spacing:-.01em}
+h2{font-size:clamp(1.16rem,4.4vw,1.4rem);line-height:1.5;margin:0 0 8px;letter-spacing:-.01em}
+h3{font-size:1rem;margin:0 0 6px;color:var(--ink-60);letter-spacing:.02em}
+p{margin:0 0 12px}
+.lead{font-size:1.02rem}
+.sub{color:var(--ink-60);font-size:.9rem;margin:0}
+.eyebrow{
+  display:inline-block;font-family:var(--font-num);font-size:.72rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:#fff;background:var(--ink);
+  padding:3px 10px;border-radius:6px;margin-bottom:10px;
+}
+.eyebrow.shu{background:var(--shu)}
+.eyebrow.mizu{background:var(--mizu)}
+.eyebrow.fuji{background:var(--fuji)}
+
+/* ---------- ボタン ---------- */
+.btn{
+  display:block;width:100%;border:2.5px solid var(--ink);border-radius:16px;
+  background:#fff;color:var(--ink);font-family:var(--font-ui);font-weight:800;
+  font-size:1.06rem;padding:15px 18px;cursor:pointer;text-align:center;line-height:1.5;
+  box-shadow:0 5px 0 var(--ink);transition:transform .1s,box-shadow .1s;
+  position:relative;
+}
+.btn:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
+.btn.primary{background:var(--ink);color:#fff;box-shadow:0 5px 0 rgba(31,42,68,.45)}
+.btn.gogo{background:var(--mizu);color:#fff;border-color:#1f6f65;box-shadow:0 5px 0 #1f6f65}
+.btn.boss{background:var(--fuji);color:#fff;border-color:#4a3a9c;box-shadow:0 5px 0 #4a3a9c}
+.btn.ghost{background:transparent;border-style:dashed;box-shadow:none;font-weight:700}
+.btn.sm{font-size:.92rem;padding:11px 14px;border-radius:13px;box-shadow:0 4px 0 var(--ink)}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn-row .btn{flex:1 1 140px;width:auto}
+
+/* ---------- 選択肢 ---------- */
+.choices{display:grid;gap:11px;margin-top:14px}
+.choices.two{grid-template-columns:1fr 1fr}
+.choices.four{grid-template-columns:1fr 1fr}
+.choice{
+  position:relative;border:2.5px solid var(--ink);border-radius:16px;background:#fff;
+  padding:16px 14px;font-size:1.12rem;font-weight:800;cursor:pointer;text-align:center;
+  font-family:var(--font-num);box-shadow:0 5px 0 var(--ink-12);color:var(--ink);
+  transition:transform .1s,box-shadow .1s;line-height:1.4;
+}
+.choice.wide{font-family:var(--font-ui);font-size:1rem;text-align:left;padding-left:20px}
+.choice:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink-12)}
+.choice.dim{opacity:.34;pointer-events:none}
+.choice.bad{border-color:var(--shu);background:rgba(229,72,77,.07);animation:shake .34s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}45%{transform:translateX(6px)}70%{transform:translateX(-3px)}}
+
+/* 赤ペンの○ */
+.maru{position:absolute;inset:-8px -6px;pointer-events:none;overflow:visible}
+.maru path{
+  fill:none;stroke:var(--shu);stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:420;stroke-dashoffset:420;animation:draw .52s .04s ease-out forwards;
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+/* ---------- 筆算図 ---------- */
+.hs-wrap{display:flex;justify-content:center;margin:14px 0 6px}
+.hissan{
+  display:inline-grid;
+  grid-template-columns:minmax(2.5em,auto) repeat(var(--n),1.65em);
+  font-family:var(--font-num);font-size:clamp(1.35rem,5.4vw,1.65rem);line-height:1;
+  background:#fff;padding:10px 14px 10px 6px;border-radius:12px;
+}
+.hissan .c{min-height:1.7em;display:flex;align-items:center;justify-content:center;padding:0 .05em;border-radius:5px}
+.hissan .c.top{border-top:2.5px solid var(--ink);border-radius:0}
+.hissan .c.left{border-left:2.5px solid var(--ink);border-radius:0}
+.hissan .c.u{border-bottom:2px solid var(--ink-35);border-radius:0}
+.hissan .c.div{justify-content:flex-end;padding-right:.32em;font-size:.95em}
+.hissan .c.hl{background:rgba(242,178,48,.42);box-shadow:0 0 0 2px rgba(242,178,48,.42)}
+.hissan .c.shu{color:var(--shu);font-weight:700}
+.hissan .c.mizu{color:var(--mizu);font-weight:700}
+.hissan .c.fade{color:var(--ink-35)}
+.hs-cap{text-align:center;font-size:.85rem;color:var(--ink-60);margin:0 0 4px}
+
+.figbox{border:2px dashed var(--ink-35);border-radius:16px;padding:12px;margin:14px 0;background:rgba(255,255,255,.6)}
+.figbox .ttl{font-size:.82rem;font-weight:800;color:var(--ink-60);margin:0 0 6px;letter-spacing:.04em}
+
+/* 手順の帯 */
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;justify-content:center}
+.step{
+  font-family:var(--font-num);font-size:.9rem;font-weight:700;
+  border:2px solid var(--ink);border-radius:11px;padding:7px 12px;background:#fff;
+  box-shadow:0 3px 0 var(--ink-12);
+}
+.step.on{background:var(--yamabuki);box-shadow:0 3px 0 #c58f18}
+.step+.step::before{content:"";}
+
+/* 3つの場所（上・中・下） */
+.zones{display:grid;gap:8px;margin:12px 0}
+.zone{display:flex;align-items:center;gap:10px;font-size:.95rem}
+.zone b{font-family:var(--font-num);border:2px solid var(--ink);border-radius:8px;padding:2px 9px;font-size:.82rem;background:#fff;flex:none}
+
+/* ---------- フィードバック ---------- */
+.fb{border-radius:16px;padding:14px 16px;margin-top:14px;border:2.5px solid;animation:rise .26s both}
+.fb.ok{border-color:var(--mizu);background:rgba(47,158,143,.08)}
+.fb.ng{border-color:var(--shu);background:rgba(229,72,77,.07)}
+.fb.tip{border-color:var(--yamabuki);background:rgba(242,178,48,.10)}
+.fb .h{font-weight:800;font-size:1.05rem;margin:0 0 5px;display:flex;align-items:center;gap:8px}
+.fb p:last-child{margin-bottom:0}
+.fb.ok .h{color:#1f6f65}
+.fb.ng .h{color:#b33136}
+.fb.tip .h{color:#9a6a08}
+
+/* ---------- えんぴつ君 ---------- */
+.coach{display:flex;gap:12px;align-items:flex-start;margin:0 0 4px}
+.coach .px{flex:none;width:52px;filter:drop-shadow(0 3px 0 var(--ink-12))}
+.coach .bub{
+  flex:1;background:#fff;border:2.5px solid var(--ink);border-radius:16px;
+  padding:11px 14px;position:relative;font-size:.98rem;box-shadow:0 4px 0 var(--ink-12);
+}
+.coach .bub::before{
+  content:"";position:absolute;left:-9px;top:16px;width:14px;height:14px;background:#fff;
+  border-left:2.5px solid var(--ink);border-bottom:2.5px solid var(--ink);transform:rotate(45deg);
+}
+.coach .bub p:last-child{margin-bottom:0}
+.coach.sm .px{width:40px}
+
+/* ---------- ステージ一覧 ---------- */
+.map{position:relative;padding-left:8px}
+.st{
+  display:flex;gap:12px;align-items:center;width:100%;text-align:left;
+  border:2.5px solid var(--ink);border-radius:16px;background:#fff;
+  padding:13px 14px;margin-bottom:11px;cursor:pointer;font-family:var(--font-ui);
+  box-shadow:0 5px 0 var(--ink-12);position:relative;
+  transition:transform .1s,box-shadow .1s;
+}
+.st:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink-12)}
+.st .no{
+  flex:none;width:44px;height:44px;border-radius:50%;border:2.5px solid var(--ink);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-num);
+  font-weight:700;font-size:1.05rem;background:var(--yamabuki);color:var(--ink);
+}
+.st.done .no{background:var(--mizu);color:#fff;border-color:#1f6f65}
+.st .tx{flex:1;min-width:0}
+.st .tx b{display:block;font-size:1.03rem;line-height:1.4}
+.st .tx span{font-size:.82rem;color:var(--ink-60);display:block;line-height:1.5}
+.st .go{flex:none;font-size:1.1rem;color:var(--ink-35)}
+.st:hover{border-color:var(--mizu)}
+
+/* ---------- 結果 ---------- */
+.judge{
+  border:3px solid var(--shu);border-radius:18px;padding:16px;text-align:center;
+  background:rgba(229,72,77,.05);margin:6px 0 14px;
+}
+.judge .big{font-size:1.5rem;font-weight:800;color:var(--shu);line-height:1.4}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.tag{border:2px solid var(--ink);border-radius:999px;padding:5px 13px;font-size:.88rem;font-weight:700;background:#fff}
+.tag.hit{background:var(--shu);color:#fff;border-color:#b33136}
+.tag.free{background:var(--mizu);color:#fff;border-color:#1f6f65}
+
+/* ---------- おとなの人へ ---------- */
+details.adult{margin-top:26px;border-top:2px dashed var(--ink-35);padding-top:16px}
+details.adult summary{
+  cursor:pointer;font-weight:800;color:var(--ink-60);font-size:.9rem;
+  list-style:none;padding:6px 0;
+}
+details.adult summary::-webkit-details-marker{display:none}
+details.adult summary::before{content:"▸ ";color:var(--shu)}
+details.adult[open] summary::before{content:"▾ "}
+.adult-body{font-size:.88rem;line-height:1.85;color:var(--ink-60)}
+.adult-body h4{margin:14px 0 4px;color:var(--ink);font-size:.92rem}
+.adult-body ul{margin:4px 0 10px;padding-left:20px}
+.adult-body li{margin-bottom:4px}
+.adult-body a{color:#1f6f65}
+.legend{display:grid;gap:6px;margin:10px 0}
+.legend div{display:flex;gap:8px;font-size:.84rem}
+.legend b{flex:none;font-family:var(--font-num)}
+
+.foot{margin-top:6px}
+.link{
+  background:none;border:none;color:var(--ink-35);font-size:.78rem;cursor:pointer;
+  font-family:var(--font-ui);text-decoration:underline;padding:8px 0;
+}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+:focus-visible{outline:3px solid var(--fuji);outline-offset:3px}
+@media (max-width:420px){
+  .choices.four{grid-template-columns:1fr 1fr}
+  .hissan{font-size:1.3rem}
+  body{font-size:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<div class="nb">
+  <header class="hud">
+    <div class="hud-t">
+      <div class="hud-title" id="hudTitle">わり算ひっ算 たんけんマップ</div>
+      <div class="bar"><i id="bar"></i></div>
+    </div>
+    <div class="hud-r">
+      <span class="pill" id="starPill">⭐ 0</span>
+      <button class="mini" id="sndBtn" title="音を けす／つける" aria-label="音の オン・オフ">🔊</button>
+      <button class="mini" id="resetBtn" title="さいしょから" aria-label="さいしょから">↺</button>
+    </div>
+  </header>
+
+  <main id="screen"></main>
+
+  <footer class="foot">
+    <button class="link" id="adultBtn">おとなの人へ（つかいかた・見かた）</button>
+  </footer>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   筆算図をつくる（n = わられる数の けた数）
+   rows の 1マス = "" | "文字" | {t:"文字", k:"クラス"}
+   ============================================================ */
+function hs(n, rows){
+  var out = '<div class="hissan" style="--n:' + n + '">';
+  for (var i = 0; i < rows.length; i++){
+    var r = rows[i];
+    for (var j = 0; j < r.length; j++){
+      var c = r[j];
+      if (c === '' || c === null || c === undefined){ out += '<div class="c"></div>'; continue; }
+      var t = (typeof c === 'object') ? c.t : c;
+      var k = (typeof c === 'object') ? (c.k || '') : '';
+      var style = (typeof c === 'object' && c.s) ? ' style="' + c.s + '"' : '';
+      out += '<div class="c ' + k + '"' + style + '>' + t + '</div>';
+    }
+  }
+  return out + '</div>';
+}
+function fig(title, inner){
+  return '<div class="figbox"><p class="ttl">' + title + '</p><div class="hs-wrap">' + inner + '</div></div>';
+}
+function steps(list, active){
+  var h = '<div class="steps">';
+  for (var i = 0; i < list.length; i++){
+    h += '<span class="step' + (i === active ? ' on' : '') + '">' + list[i] + '</span>';
+    if (i < list.length - 1) h += '<span class="step" style="border:none;box-shadow:none;padding:7px 0;background:none">→</span>';
+  }
+  return h + '</div>';
+}
+
+/* ============================================================
+   ステージ・データ
+   ============================================================ */
+var SVG_PX = '<svg class="px" viewBox="0 0 90 140" aria-hidden="true">'
+ + '<rect x="27" y="20" width="36" height="88" rx="6" fill="#f2b230"/>'
+ + '<rect x="27" y="20" width="36" height="15" rx="6" fill="#e5484d"/>'
+ + '<rect x="27" y="104" width="36" height="7" fill="#e0a52c"/>'
+ + '<path d="M27 111 L45 138 L63 111 Z" fill="#f7e3bd"/>'
+ + '<path d="M40.5 128 L45 138 L49.5 128 Z" fill="#1f2a44"/>'
+ + '<g class="face">__FACE__</g></svg>';
+var FACE = {
+  up:  '<circle cx="38" cy="62" r="3.6" fill="#1f2a44"/><circle cx="52" cy="62" r="3.6" fill="#1f2a44"/>'
+     + '<path d="M38 76 q7 8 14 0" stroke="#1f2a44" stroke-width="3.4" fill="none" stroke-linecap="round"/>'
+     + '<circle cx="32" cy="74" r="3.4" fill="#e5484d" opacity=".28"/><circle cx="58" cy="74" r="3.4" fill="#e5484d" opacity=".28"/>',
+  think:'<circle cx="38" cy="62" r="3.6" fill="#1f2a44"/><circle cx="52" cy="62" r="3.6" fill="#1f2a44"/>'
+     + '<path d="M36 76 q9 5 18 -2" stroke="#1f2a44" stroke-width="3.4" fill="none" stroke-linecap="round"/>',
+  cheer:'<path d="M34 60 q4 -6 8 0" stroke="#1f2a44" stroke-width="3.4" fill="none" stroke-linecap="round"/>'
+     + '<path d="M48 60 q4 -6 8 0" stroke="#1f2a44" stroke-width="3.4" fill="none" stroke-linecap="round"/>'
+     + '<path d="M36 74 q9 11 18 0" stroke="#1f2a44" stroke-width="3.4" fill="none" stroke-linecap="round"/>'
+     + '<circle cx="30" cy="73" r="3.6" fill="#e5484d" opacity=".3"/><circle cx="60" cy="73" r="3.6" fill="#e5484d" opacity=".3"/>'
+};
+function pencil(mood){
+  return SVG_PX.replace('__FACE__', FACE[mood || 'up']);
+}
+function bub(html, mood, small){
+  return '<div class="coach' + (small ? ' sm' : '') + '">' + pencil(mood)
+       + '<div class="bub">' + html + '</div></div>';
+}
+
+var STAGES = [
+
+/* ---------- 1 ---------- */
+{
+  id:'s1', no:'1', title:'九九の ぎゃくひき', short:'「この数は どの だん？」',
+  intro:
+    '<p>わり算は、<b>九九の ぎゃくもん</b>です。</p>'
+  + '<p class="lead">「<b>3の だんで 21に なるのは いくつ？</b>」<br>→ 3×7＝21 だから <b>7</b>。<br>これが わり算の こたえ（商）を 見つける やりかたです。</p>'
+  + '<p>ここで つまずくと、あとの ぜんぶが おそく なります。<b>まず ここだけ</b> チェック。</p>',
+  fig: fig('2けた × 1けた の 暗算も ここで きたえる',
+      '<div style="font-family:var(--font-num);font-size:1.15rem;line-height:2.1;text-align:left">'
+    + '3 × <b style="color:var(--shu)">7</b> ＝ 21　→　21 は「3の だん」<br>'
+    + '7 × <b style="color:var(--shu)">8</b> ＝ 56　→　56 は「7の だん」<br>'
+    + '32 × 7 ＝ 224　（くりあがりは 小さく メモ）</div>'),
+  quiz:[
+    { q:'4の だんで <b>32</b> に なるのは いくつ？', ch:['6','7','8','9'], a:2, cols:4,
+      ng:'おしい！ 4×6＝24、4×7＝28… もう すこし 大きいよ。',
+      ok:'ばっちり！ 4×8＝32 だね。',
+      hint:'4のだんを じゅんに 言ってみよう：4,8,12,16,20,24,28,<b>32</b>。' },
+    { q:'7の だんで <b>56</b> に なるのは いくつ？', ch:['6','7','8','9'], a:2, cols:4,
+      ng:'ちがうよ。7×7＝49、7×8＝… もう いちど 言ってみよう。',
+      ok:'そのとおり！ 7×8＝56。',
+      hint:'7,14,21,28,35,42,49,<b>56</b>。8こめ だね。' },
+    { q:'<b>21 × 3</b> は いくつ？', ch:['53','63','73','23'], a:1, cols:4,
+      ng:'かけ算の じゅんばんは 右から！ 1×3＝3、2×3＝6。',
+      ok:'そう！ 21×3＝63。',
+      hint:'一の位から：1×3＝3 → 十の位：2×3＝6 → こたえ 63。' },
+    { q:'<b>32 × 7</b> は いくつ？', ch:['194','214','224','234'], a:2, cols:4,
+      ng:'くりあがりに ちゅうい。2×7＝14 → 「4」を 書いて 1 を メモ。',
+      ok:'すごい！ 32×7＝224。',
+      hint:'2×7＝14 →「4」を書いて くりあがり「1」を メモ → 3×7＝21 → 21＋1＝22 → 224。' }
+  ],
+  clear:'九九の ぎゃくひき、できてるね！'
+},
+
+/* ---------- 2 ---------- */
+{
+  id:'s2', no:'2', title:'商を たてる ばしょ', short:'わる数と くらべて きめる',
+  intro:
+    '<p class="lead">「<b>商は いちばん 左に たてる</b>」——これは <b>まちがい</b>です。'
+  + '正しくは、<b>わる数より 大きく なる ところ</b>から たてます。</p>'
+  + bub('<p>やりかたは <b>ゆびで かくす</b>だけ。</p><p>うしろの 数字を 1つずつ かくして、'
+  + '「われるかな？」と たずねて いくんだ。</p>','think')
+  + '<p style="margin-top:12px"><b>① 一の位の「1」を ゆびで かくす</b> → 「22 ÷ 32」→ 22の ほうが 小さい → まだ われない</p>',
+  fig: fig('① かくしてみる',
+      hs(3, [
+        ['', '', '', ''],
+        [{t:'32'}, {t:'2',k:'top left'}, {t:'2',k:'top'}, {t:'1',k:'top fade'}]
+      ])),
+  intro2:
+    '<p><b>② ゆびを はなす</b> → 「221 ÷ 32」→ 今度は 大きく なった → <b>ここで われる！</b></p>'
+  + '<p>だから 商は <b>一の位の 上</b>に たつんだ。</p>',
+  fig2: fig('② はなしてみる → 商は 一の位の 上',
+      hs(3, [
+        ['', '', '', {t:'6', k:'hl'}],
+        [{t:'32'}, {t:'2',k:'top left'}, {t:'2',k:'top'}, {t:'1',k:'top'}],
+        ['', {t:'1',k:'left u'}, {t:'9',k:'u'}, {t:'2',k:'u'}],
+        ['', {t:'',k:'left'}, {t:'2'}, {t:'9'}]
+      ])),
+  quiz:[
+    { q:'<b>92 ÷ 23</b> の 商は どの位の 上に たつ？', ch:['十の位の 上','一の位の 上','百の位の 上'], a:1, wide:true, cols:1,
+      ng:'9 ÷ 23 を やってみると… 9は 23より 小さいので われないよね。',
+      ok:'そう！ 92 ÷ 23 なら われるから、一の位の 上。',
+      hint:'9 と 23 を くらべる → 9の ほうが 小さい → われない。じゃあ 92 と 23 → われる！ → 商は 一の位の 上。' },
+    { q:'<b>476 ÷ 32</b> の 商は どの位から たつ？', ch:['一の位から','十の位から','百の位から'], a:1, wide:true, cols:1,
+      ng:'4 ÷ 32 は われないよ。もう 1つ ゆびを どけて みよう。',
+      ok:'せいかい！ 47 ÷ 32 が できるので 十の位から。',
+      hint:'4 ÷ 32 → われない。47 ÷ 32 → われる！ だから 十の位から たつ。' },
+    { q:'<b>938 ÷ 12</b> の 商は どの位から たつ？', ch:['一の位から','十の位から','百の位から'], a:1, wide:true, cols:1,
+      ng:'9 ÷ 12 は われないね。もう ひとけた ふやしてみよう。',
+      ok:'そのとおり！ 93 ÷ 12 が できるので 十の位から。',
+      hint:'9 ÷ 12 → われない。93 ÷ 12 → われる！ だから 十の位から。' },
+    { q:'<b>62 ÷ 18</b> の 商は どの位の 上？', ch:['十の位の 上','一の位の 上'], a:1, wide:true, cols:1,
+      ng:'6 ÷ 18 は われないよ。',
+      ok:'そう！ 62 ÷ 18 が できるので 一の位の 上。',
+      hint:'6 ÷ 18 → われない。62 ÷ 18 → われる！ だから 一の位の 上。' }
+  ],
+  clear:'商の ばしょ、かんぺき！'
+},
+
+/* ---------- 3 ---------- */
+{
+  id:'s3', no:'3', title:'見当づけ（かりの商）', short:'九九が つかえない とき',
+  intro:
+    '<p class="lead">2けたで わるときは、<b>九九が つかえません</b>。'
+  + 'だから <b>だいたいの 数</b>で 考えます。</p>'
+  + bub('<p><b>221 ÷ 32</b> なら…</p><p>221 →「<b>220</b>」、32 →「<b>30</b>」と 思って、'
+  + '<b>22 ÷ 3 ＝ 7ぐらい</b>。まず <b>7</b> を たてて みる。</p>'
+  + '<p>ちがったら あとで なおせば OK。だから <b>うすく 書く</b>のが コツ！</p>','think'),
+  quiz:[
+    { q:'<b>84 ÷ 21</b> の 商は いくつぐらい？', ch:['2','3','4','6'], a:2, cols:4,
+      ng:'だいたいで 考えるよ。84→80、21→20 と 思ってみよう。',
+      ok:'そう！ 80 ÷ 20 ＝ 4 だね。',
+      hint:'84 を 80、21 を 20 と 思う → 80 ÷ 20 ＝ <b>4</b>。' },
+    { q:'<b>93 ÷ 23</b> の 商は いくつぐらい？', ch:['2','3','4','5'], a:2, cols:4,
+      ng:'93→90、23→20 で 考えてみよう。',
+      ok:'せいかい！ 90 ÷ 20 ＝ 4.5 → 4ぐらい。',
+      hint:'93 を 90、23 を 20 と 思う → 90 ÷ 20 ＝ 4.5 → <b>4</b>ぐらい。' },
+    { q:'<b>188 ÷ 32</b> の 商は いくつぐらい？', ch:['4','5','6','9'], a:2, cols:4,
+      ng:'188→180、32→30 で 考えてみよう。',
+      ok:'そのとおり！ 180 ÷ 30 ＝ 6。',
+      hint:'188 を 180、32 を 30 と 思う → 180 ÷ 30 ＝ <b>6</b>。' }
+  ],
+  clear:'見当づけ、できるね！'
+},
+
+/* ---------- 4 ---------- */
+{
+  id:'s4', no:'4', title:'たてた商を かける', short:'2けた × 1けた の 暗算',
+  intro:
+    '<p class="lead">たてた商 と わる数 を かけます。'
+  + 'ここで <b>ちいさな くりあがりメモ</b>を するだけで、まちがえが ぐっと へります。</p>'
+  + '<div class="figbox"><p class="ttl">32 × 6 の やりかた</p>'
+  + '<div style="font-family:var(--font-num);font-size:1.05rem;line-height:2.15">'
+  + '① 2 × 6 ＝ 12 →「2」を 書いて、くりあがり「<b style="color:var(--shu)">1</b>」を 小さく メモ<br>'
+  + '② 3 × 6 ＝ 18 → 18 ＋ <b style="color:var(--shu)">1</b> ＝ <b>19</b><br>'
+  + '③ こたえ <b style="color:var(--mizu)">192</b></div></div>',
+  quiz:[
+    { q:'<b>21 × 4</b> は？', ch:['82','84','86','74'], a:1, cols:4,
+      ng:'一の位から：1×4＝4 → 十の位：2×4＝8。',
+      ok:'そう！ 21×4＝84。',
+      hint:'1×4＝4 → 2×4＝8 → <b>84</b>。' },
+    { q:'<b>32 × 6</b> は？', ch:['182','192','202','122'], a:1, cols:4,
+      ng:'2×6＝12 で くりあがりが あるよ。メモ したかな？',
+      ok:'ばっちり！ 32×6＝192。',
+      hint:'2×6＝12 →「2」＋くりあがり1 → 3×6＝18 → 18＋1＝19 → <b>192</b>。' },
+    { q:'<b>23 × 4</b> は？', ch:['82','92','102','88'], a:1, cols:4,
+      ng:'3×4＝12 だよ。くりあがりに ちゅうい。',
+      ok:'そのとおり！ 23×4＝92。',
+      hint:'3×4＝12 →「2」＋くりあがり1 → 2×4＝8 → 8＋1＝9 → <b>92</b>。' },
+    { q:'<b>32 × 7</b> は？', ch:['214','224','234','204'], a:1, cols:4,
+      ng:'2×7＝14。くりあがりは 1だよ。',
+      ok:'すごい！ 32×7＝224。',
+      hint:'2×7＝14 →「4」＋1 → 3×7＝21 → 21＋1＝22 → <b>224</b>。' }
+  ],
+  clear:'かけ算、はやく なってきたね！'
+},
+
+/* ---------- 5 ---------- */
+{
+  id:'s5', no:'5', title:'手じゅんと 書く ばしょ', short:'たてる→かける→ひく→おろす',
+  intro:
+    '<p class="lead">わり算の ひっ算は <b>4つの どうさ</b>の くりかえし。</p>'
+  + steps(['たてる','かける','ひく','おろす'], -1)
+  + '<p>書く ばしょも 決まって います。<b>どこに 何を 書くか わからなく なったら、'
+  + '先に うすく <b>○（まる）</b>を 書いて おく</b>——これが <b>マル作戦</b>です。</p>'
+  + '<div class="zones">'
+  + '<div class="zone"><b>上</b> わり算の こたえ（商）</div>'
+  + '<div class="zone"><b>中</b> かけ算の こたえ</div>'
+  + '<div class="zone"><b>下</b> ひき算の こたえ</div></div>'
+  + '<p>2けたで わる ときは、これを <b>もう 1回</b> くりかえします。</p>',
+  fig: fig('84 ÷ 21 —— 3つの ばしょ',
+      hs(2, [
+        ['', '', {t:'4', k:'hl'}],
+        [{t:'21'}, {t:'8',k:'top left'}, {t:'4',k:'top'}],
+        ['', {t:'8',k:'left u'}, {t:'4',k:'u'}],
+        ['', {t:'',k:'left'}, {t:'0'}]
+      ])),
+  quiz:[
+    { q:'「<b>たてる</b>」の つぎは なに？', ch:['かける','ひく','おろす'], a:0, wide:true, cols:1,
+      ng:'じゅんばんを おもいだそう：たてる → ？ → ひく → おろす。',
+      ok:'そう！ たてる → かける → ひく → おろす。',
+      hint:'「たてる → <b>かける</b> → ひく → おろす」。たてた商を まず かけ算するんだ。' },
+    { q:'「<b>ひく</b>」の つぎは なに？', ch:['かける','たてる','おろす'], a:2, wide:true, cols:1,
+      ng:'ひいた あとは、つぎの 位の 数を 下ろして くるよ。',
+      ok:'そのとおり！ つぎの 位を おろす。',
+      hint:'ひき算が おわったら、<b>つぎの 位の 数字を 下ろす</b>。' },
+    { q:'「<b>32 × 6 ＝ 192</b>」は どこに 書く？', ch:['わられる数の 上','わられる数の 下（中）','わる数の 下'], a:1, wide:true, cols:1,
+      ng:'かけ算は 中だよ。わられる数の すぐ 下に 書くんだ。',
+      ok:'せいかい！ かけ算は 中＝わられる数の 下。',
+      hint:'上＝商、<b>中＝かけ算</b>、下＝ひき算。かけ算の こたえは わられる数の 下に 書く。' },
+    { q:'先に <b>○（まる）</b>を 書くのは なんの ため？', ch:['かっこいいから','どこに 何を 書くか すぐ わかるから','はやく 書けるから'], a:1, wide:true, cols:1,
+      ng:'もう いちど かんがえて みよう。まるは 場所の 目じるし！',
+      ok:'そのとおり！ 場所が 見えて、あたまが こんらん しないんだ。',
+      hint:'まるは <b>「ここに これを 書く」という 目じるし</b>。場所が 見えると 手が とまらない。' }
+  ],
+  clear:'手じゅんが あたまに 入ったね！'
+},
+
+/* ---------- 6 ---------- */
+{
+  id:'s6', no:'6', title:'うまく いかない ときの なおし方', short:'ひけない・大きすぎる',
+  intro:
+    '<p class="lead">かりの商は <b>はずれるのが あたりまえ</b>。'
+  + '「まちがえた」じゃ なくて「<b>なおす</b>」だけです。</p>'
+  + '<div class="zones" style="gap:12px">'
+  + '<div class="zone" style="align-items:flex-start"><b>ひけない</b><span>（かけ算の こたえが 大きすぎる）<br>→ 商を <b style="color:var(--shu)">1つ 小さく</b> する</span></div>'
+  + '<div class="zone" style="align-items:flex-start"><b>あまりが<br>大きい</b><span>（あまり ＞ わる数）<br>→ 商を <b style="color:var(--mizu)">1つ 大きく</b> する</span></div></div>',
+  quiz:[
+    { q:'221 ÷ 32 で、商に <b>8</b> を たてたら <b>32×8＝256</b>。221 から ひけなかった。どうする？',
+      ch:['商を 1つ 小さくする','商を 1つ 大きくする','そのまま すすむ'], a:0, wide:true, cols:1,
+      ng:'ひけない というのは、かけすぎ だよ。',
+      ok:'そう！ 小さく して 7に しよう。',
+      hint:'ひけない ＝ かけすぎ → 商を <b>1つ 小さく</b>（8 → 7）。' },
+    { q:'32 で わったら、あまりが <b>35</b> に なった。どうする？',
+      ch:['商を 1つ 小さくする','商を 1つ 大きくする','そのまま すすむ'], a:1, wide:true, cols:1,
+      ng:'35 の 中に まだ 32 が 1つ 入るよ。',
+      ok:'そのとおり！ まだ われるので 商を 大きく。',
+      hint:'あまり 35 ＞ わる数 32 → まだ 32 が 1つ 入る → 商を <b>1つ 大きく</b>。' },
+    { q:'ひき算が できない（引かれる数より 引く数が 大きい）。どうする？',
+      ch:['商を 1つ 小さくする','商を 1つ 大きくする','そのまま すすむ'], a:0, wide:true, cols:1,
+      ng:'ひけない ＝ かけすぎ。小さく して たしかめよう。',
+      ok:'せいかい！ 商を 小さく して ひき算を やりなおす。',
+      hint:'ひけない → 商を <b>小さく</b> する。なおしたら また ひき算を やりなおす。' }
+  ],
+  clear:'なおし方、おぼえたね！'
+},
+
+/* ---------- 7 ---------- */
+{
+  id:'s7', no:'7', title:'さいごの かくにん', short:'あまり ＜ わる数',
+  intro:
+    '<p class="lead">ひき算の あとは、<b>あまり ＜ わる数</b> を かならず かくにんします。</p>'
+  + '<div class="figbox"><p class="ttl">かくにんの れい</p>'
+  + '<div style="font-size:1rem;line-height:2.15">'
+  + '<span style="color:var(--mizu);font-weight:800">OK</span>：わる数 32 で あまり <b>29</b> → 29 ＜ 32 ✓<br>'
+  + '<span style="color:var(--shu);font-weight:800">だめ</span>：わる数 21 で あまり <b>30</b> → 30 ＞ 21 ✗ まだ われる！</div></div>',
+  fig: fig('221 ÷ 32 ＝ 6 あまり 29',
+      hs(3, [
+        ['', '', '', {t:'6'}],
+        [{t:'32'}, {t:'2',k:'top left'}, {t:'2',k:'top'}, {t:'1',k:'top'}],
+        ['', {t:'1',k:'left u'}, {t:'9',k:'u'}, {t:'2',k:'u'}],
+        ['', {t:'',k:'left'}, {t:'2'}, {t:'9',k:'mizu'}]
+      ])),
+  quiz:[
+    { q:'21 で わって、あまりが <b>5</b>。これで いい？', ch:['OK（あまり ＜ わる数）','だめ（もっと われる）'], a:0, wide:true, cols:1,
+      ng:'5 と 21 を くらべて みよう。5 ＜ 21 だね。',
+      ok:'そう！ 5 ＜ 21 なので OK。',
+      hint:'あまり 5 ＜ わる数 21 → <b>OK</b>。' },
+    { q:'32 で わって、あまりが <b>35</b>。これで いい？', ch:['OK（あまり ＜ わる数）','だめ（もっと われる）'], a:1, wide:true, cols:1,
+      ng:'35 の 中に 32 が まだ 1つ 入って いるよ。',
+      ok:'せいかい！ あまりが 大きすぎるので 商を 1つ 大きく。',
+      hint:'あまり 35 ＞ わる数 32 → <b>だめ</b>。商を 1つ 大きく して やりなおし。' },
+    { q:'23 で わって、あまりが <b>22</b>。これで いい？', ch:['OK（あまり ＜ わる数）','だめ（もっと われる）'], a:0, wide:true, cols:1,
+      ng:'22 と 23 を くらべて みよう。22 の ほうが 小さいよ。',
+      ok:'そのとおり！ 22 ＜ 23 なので OK。',
+      hint:'あまり 22 ＜ わる数 23 → <b>OK</b>。' },
+    { q:'18 で わって、あまりが <b>18</b>。これで いい？', ch:['OK（あまり ＜ わる数）','だめ（もっと われる）'], a:1, wide:true, cols:1,
+      ng:'同じ 数は まだ われるよ。18 の 中に 18 が 1つ 入るね。',
+      ok:'せいかい！ あまり＝わる数 なら、まだ われます。',
+      hint:'あまり 18 ＝ わる数 18 → まだ 1つ われる → <b>だめ</b>。あまりは わる数より 小さく なきゃ だめ。' }
+  ],
+  clear:'さいごの かくにん、りっぱ！'
+},
+
+/* ---------- BOSS ---------- */
+{
+  id:'boss', no:'★', title:'BOSS：93 ÷ 23', short:'いっしょに 1つずつ すすもう', boss:true,
+  intro:
+    '<p class="lead">ここまでの 7つを つかって、<b>さいごの 1もん</b>を いっしょに ときます。'
+  + 'わからなくても ぜんぜん だいじょうぶ。1つずつ すすもう。</p>'
+  + bub('<p>かみと えんぴつ ようい できた？<br>できたら スタート！</p>','up'),
+  quiz:[
+    { q:'まず「9」と「23」を くらべます。9は 23より…？',
+      ch:['9の ほうが 大きい','9の ほうが 小さい'], a:1, wide:true, cols:1,
+      fig: fig('スタート', hs(2, [
+        ['', '', ''],
+        [{t:'23'}, {t:'9',k:'top left'}, {t:'3',k:'top'}]
+      ])),
+      ng:'ゆっくり くらべよう。9つ しか ないのに、23こ まとめるのは むりだね。',
+      ok:'そう！ 9は われない。だから 92で みるよ。',
+      hint:'9 ＜ 23 → 9 は われない。では 92 は？ → われる！' },
+    { q:'92 と 23 なら われるので、商は <b>一の位の 上</b>に たてます。見当を つけよう。93→90、23→20 としたら、商は いくつぐらい？',
+      ch:['3','4','5'], a:1, wide:true, cols:1,
+      fig: fig('① せんとうは 一の位の 上', hs(2, [
+        ['', '', {t:'?', k:'hl'}],
+        [{t:'23'}, {t:'9',k:'top left'}, {t:'3',k:'top'}]
+      ])),
+      ng:'90 ÷ 20 を 計算しよう。9 ÷ 2 ＝ 4.5 だね。',
+      ok:'そう！ 4ぐらい。まず 4 を たててみよう。',
+      hint:'90 ÷ 20 → 9 ÷ 2 ＝ 4.5 → 商は <b>4</b>ぐらい。' },
+    { q:'商に <b>4</b> を たてました。つぎは「かける」。<b>23 × 4</b> は いくつ？',
+      ch:['82','92','102'], a:1, wide:true, cols:1,
+      fig: fig('② 商は 4', hs(2, [
+        ['', '', {t:'4'}],
+        [{t:'23'}, {t:'9',k:'top left'}, {t:'3',k:'top'}]
+      ])),
+      ng:'3×4＝12 で くりあがりが あるよ。メモして みよう。',
+      ok:'せいかい！ 92 を わられる数の 下（中）に 書こう。',
+      hint:'3×4＝12 →「2」＋くりあがり1 → 2×4＝8 → 8＋1＝9 → <b>92</b>。' },
+    { q:'つぎは「ひく」。<b>93 − 92</b> は いくつ？',
+      ch:['1','11','9'], a:0, wide:true, cols:1,
+      fig: fig('③ 92 を 中に 書く', hs(2, [
+        ['', '', {t:'4'}],
+        [{t:'23'}, {t:'9',k:'top left'}, {t:'3',k:'top'}],
+        ['', {t:'9',k:'left u'}, {t:'2',k:'u'}]
+      ])),
+      ng:'93 − 92 を もう いちど。1の くらいだよ。',
+      ok:'そのとおり！ 1。これを 下に 書こう。',
+      hint:'93 − 92 ＝ <b>1</b>。くり下がりは ないね。' },
+    { q:'さいごの かくにん。<b>あまり 1</b> と <b>わる数 23</b>。1つ も 小さい？',
+      ch:['1 ＜ 23 なので OK','だめ。まだ われる'], a:0, wide:true, cols:1,
+      fig: fig('④ ひき算の こたえは 下', hs(2, [
+        ['', '', {t:'4'}],
+        [{t:'23'}, {t:'9',k:'top left'}, {t:'3',k:'top'}],
+        ['', {t:'9',k:'left u'}, {t:'2',k:'u'}],
+        ['', {t:'',k:'left'}, {t:'1',k:'hl'}]
+      ])),
+      ng:'1 の 中に 23 は 入らないよ。もう いちど くらべよう。',
+      ok:'かんぺき！ こたえは「4 あまり 1」。やったね！',
+      hint:'1 ＜ 23 → OK！ こたえは <b>4 あまり 1</b>。' }
+  ],
+  clear:'BOSS クリア！ きみが 1人で とおしたよ。'
+}
+];
+
+/* ステージの 見出しマーク（数字の かわりに 記号） */
+var ICON_STAR = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.5 1.3 6.5L12 17.2 6.1 20.4l1.3-6.5L2.5 9.4l6.6-.8z" fill="currentColor"/></svg>';
+var ICON_SOUND_ON = '<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M4 9h3l4-3.5v13L7 15H4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 010 7M18 6a8.5 8.5 0 010 12" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>';
+var ICON_SOUND_OFF = '<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M4 9h3l4-3.5v13L7 15H4z" fill="currentColor"/><path d="M15.5 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>';
+var ICON_RESET = '<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M4 12a8 8 0 108-8" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M12 1.5l3 3-3 3z" fill="currentColor"/></svg>';
+/*__DATA_END__*/
+/* ============================================================
+   エンジン
+   ============================================================ */
+function el(id){ return document.getElementById(id); }
+
+/* ---------- 音 ---------- */
+var AC = null, soundOn = true;
+function actx(){
+  if (AC) return AC;
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ AC = null; }
+  return AC;
+}
+function note(freq, start, dur, vol, type){
+  var a = actx(); if (!a) return;
+  var o = a.createOscillator(), g = a.createGain();
+  o.type = type || 'sine'; o.frequency.value = freq;
+  o.connect(g); g.connect(a.destination);
+  var t = a.currentTime + start;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+function sfx(kind){
+  if (!soundOn) return;
+  var a = actx(); if (!a) return;
+  if (a.state === 'suspended'){ try{ a.resume(); }catch(e){} }
+  if (kind === 'ok'){ note(784,0,.14,.13); note(1175,.09,.24,.11); }
+  else if (kind === 'ng'){ note(233,0,.16,.09,'triangle'); note(196,.10,.24,.08,'triangle'); }
+  else if (kind === 'tap'){ note(523,0,.07,.06,'square'); }
+  else if (kind === 'clear'){ note(523,0,.30,.12); note(659,.11,.30,.12); note(784,.22,.30,.12); note(1047,.33,.42,.13); }
+}
+
+/* ---------- 紙ふぶき ---------- */
+var fx = el('fx'), fxc = fx.getContext('2d'), parts = [], running = false;
+function sizeFx(){
+  var dpr = window.devicePixelRatio || 1;
+  fx.width = window.innerWidth * dpr; fx.height = window.innerHeight * dpr;
+  fxc.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function confetti(n){
+  sizeFx();
+  var cols = ['#e5484d','#f2b230','#2f9e8f','#6f5cd0','#1f2a44'];
+  for (var i = 0; i < n; i++){
+    parts.push({
+      x: window.innerWidth * (0.12 + Math.random() * 0.76),
+      y: -20 - Math.random() * 160,
+      vx: (Math.random() - 0.5) * 2.8,
+      vy: 2.0 + Math.random() * 3.2,
+      r: 5 + Math.random() * 7,
+      c: cols[i % cols.length],
+      rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.3,
+      sq: Math.random() < 0.55
+    });
+  }
+  if (!running){ running = true; requestAnimationFrame(tickFx); }
+}
+function tickFx(){
+  fxc.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  for (var i = parts.length - 1; i >= 0; i--){
+    var p = parts[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.rot += p.vr;
+    if (p.y > window.innerHeight + 40){ parts.splice(i, 1); continue; }
+    fxc.save(); fxc.translate(p.x, p.y); fxc.rotate(p.rot); fxc.fillStyle = p.c;
+    if (p.sq) fxc.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.62);
+    else { fxc.beginPath(); fxc.arc(0, 0, p.r / 2, 0, 6.2832); fxc.fill(); }
+    fxc.restore();
+  }
+  if (parts.length) requestAnimationFrame(tickFx);
+  else { running = false; fxc.clearRect(0, 0, window.innerWidth, window.innerHeight); }
+}
+
+/* ---------- よみあげ ---------- */
+function speak(text){
+  if (!('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP'; u.rate = 0.92; u.pitch = 1.05;
+    var vs = window.speechSynthesis.getVoices() || [];
+    for (var i = 0; i < vs.length; i++){ if (vs[i].lang && vs[i].lang.indexOf('ja') === 0){ u.voice = vs[i]; break; } }
+    window.speechSynthesis.speak(u);
+  } catch(e){}
+}
+function stripTags(s){ return String(s).replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' '); }
+
+/* ---------- 状態 ---------- */
+var KEY = 'warizan-tanken-v1';
+var S = { stage:0, qi:0, tries:0, locked:false, done:{}, wrong:{}, answered:0, firstTry:0 };
+var TOTAL_Q = STAGES.reduce(function(a, s){ return a + s.quiz.length; }, 0);
+var N_STAGE = STAGES.length;
+
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify({ done:S.done, wrong:S.wrong, answered:S.answered, firstTry:S.firstTry })); } catch(e){}
+}
+function load(){
+  try {
+    var d = JSON.parse(localStorage.getItem(KEY) || '{}');
+    if (d && typeof d === 'object'){
+      S.done = d.done || {}; S.wrong = d.wrong || {};
+      S.answered = d.answered || 0; S.firstTry = d.firstTry || 0;
+    }
+  } catch(e){}
+}
+function clearedCount(){ var n = 0; for (var k in S.done){ if (S.done[k]) n++; } return n; }
+
+/* ---------- HUD ---------- */
+function updateHUD(){
+  var c = clearedCount();
+  el('bar').style.width = Math.round(c / N_STAGE * 100) + '%';
+  el('starPill').innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px">'
+    + ICON_STAR + '<span>' + c + '/' + N_STAGE + '</span></span>';
+  el('sndBtn').innerHTML = soundOn ? ICON_SOUND_ON : ICON_SOUND_OFF;
+  el('sndBtn').className = 'mini' + (soundOn ? '' : ' off');
+  el('hudTitle').textContent = 'わり算 ひっ算 たんけんマップ';
+}
+
+/* ---------- 部品 ---------- */
+var MARU = '<svg class="maru" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
+  + '<path d="M14 34 C18 12,74 6,86 28 C96 52,66 88,38 84 C14 80,4 52,22 30"/></svg>';
+
+function choiceHTML(q, i){
+  var cls = 'choice' + (q.wide ? ' wide' : '');
+  return '<button class="' + cls + '" data-i="' + i + '" type="button">' + q.ch[i] + '</button>';
+}
+function dots(n, cur){
+  var h = '<span style="font-family:var(--font-num);font-size:.8rem;color:var(--ink-35);letter-spacing:.18em">';
+  for (var i = 0; i < n; i++) h += (i === cur ? '●' : '○');
+  return h + '</span>';
+}
+function readBtn(text){
+  if (!('speechSynthesis' in window)) return '';
+  return '<button class="btn ghost sm" type="button" style="margin-top:10px" '
+    + 'onclick="speak(this.dataset.t)" data-t="' + String(text).replace(/"/g, '&quot;') + '">'
+    + '<span style="display:inline-flex;align-items:center;gap:6px;justify-content:center">'
+    + ICON_SOUND_ON + 'よみあげる</span></button>';
+}
+
+/* ============================================================
+   画面
+   ============================================================ */
+function render(){
+  updateHUD();
+  var s = el('screen');
+  s.innerHTML = '';
+  if (VIEW === 'home') s.innerHTML = viewHome();
+  else if (VIEW === 'intro') s.innerHTML = viewIntro();
+  else if (VIEW === 'quiz'){ s.innerHTML = viewQuiz(); bindQuiz(); }
+  else if (VIEW === 'clear') s.innerHTML = viewClear();
+  else if (VIEW === 'result') s.innerHTML = viewResult();
+  else if (VIEW === 'adult') s.innerHTML = viewAdult();
+  window.scrollTo(0, 0);
+}
+
+function viewHome(){
+  var c = clearedCount();
+  var h = '<div class="card accent">'
+    + '<span class="eyebrow">たんけんマップ</span>'
+    + '<h1>わり算の ひっ算、<br>どこで つまずいてる？</h1>'
+    + '<p class="lead">ステージを じゅんばんに すすむと、<b>きみの「にがてな ところ」</b>が わかります。'
+    + 'わからなくて あたりまえ。まちがえても すすめるから、あんしんして やってみよう。</p>'
+    + '<p class="sub">ぜんぶで ' + TOTAL_Q + 'もん／' + N_STAGE + 'ステージ　1もん 1ぷん くらい</p>'
+    + '</div>';
+
+  h += '<div class="map">';
+  for (var i = 0; i < STAGES.length; i++){
+    var st = STAGES[i];
+    var done = !!S.done[st.id];
+    h += '<button class="st' + (done ? ' done' : '') + '" type="button" data-go="' + i + '">'
+       + '<span class="no">' + (done ? '✓' : st.no) + '</span>'
+       + '<span class="tx"><b>' + st.title + '</b><span>' + st.short + '</span></span>'
+       + '<span class="go">›</span></button>';
+  }
+  h += '</div>';
+
+  h += '<button class="btn ' + (c ? 'gogo' : 'primary') + '" type="button" id="startBtn">'
+     + (c ? 'つづきから はじめる' : 'たんけんを はじめる') + '</button>';
+
+  if (c >= N_STAGE){
+    h += '<button class="btn ghost sm" type="button" id="resBtn" style="margin-top:12px">けっか を 見る</button>';
+  }
+  return h;
+}
+
+function viewIntro(){
+  var st = STAGES[S.stage];
+  var txt = st.title + '。' + stripTags(st.intro);
+  var h = '<div class="card accent">'
+    + '<span class="eyebrow' + (st.boss ? ' fuji' : '') + '">' + (st.boss ? 'BOSS ステージ' : 'STAGE ' + st.no + ' / 7') + '</span>'
+    + '<h2>' + st.title + '</h2>'
+    + st.intro
+    + (st.fig ? st.fig : '')
+    + (st.intro2 ? st.intro2 : '')
+    + (st.fig2 ? st.fig2 : '')
+    + readBtn(txt)
+    + '</div>';
+  h += '<button class="btn ' + (st.boss ? 'boss' : 'gogo') + '" type="button" id="toQuiz">もんだいへ すすむ（' + st.quiz.length + 'もん）</button>'
+     + '<button class="btn ghost sm" type="button" id="toHome" style="margin-top:12px">マップに もどる</button>';
+  return h;
+}
+
+function viewQuiz(){
+  var st = STAGES[S.stage], q = st.quiz[S.qi];
+  var h = '<div class="card accent">';
+  h += '<span class="eyebrow' + (st.boss ? ' fuji' : '') + '">'
+     + (st.boss ? 'BOSS' : 'STAGE ' + st.no) + '　' + dots(st.quiz.length, S.qi) + '</span>';
+  h += '<h2>' + q.q + '</h2>';
+  if (q.fig) h += q.fig;
+  h += '<div class="choices' + (q.cols === 4 ? ' four' : (q.cols === 1 ? '' : ' two')) + '" id="choiceBox">';
+  for (var i = 0; i < q.ch.length; i++) h += choiceHTML(q, i);
+  h += '</div>';
+  h += '<div id="fbSlot"></div><div id="nextSlot"></div>';
+  h += '</div>';
+  return h;
+}
+
+function bindQuiz(){
+  var box = el('choiceBox');
+  if (!box) return;
+  box.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('.choice') : null;
+    if (!b) return;
+    pick(parseInt(b.getAttribute('data-i'), 10));
+  });
+}
+
+function pick(i){
+  if (S.locked) return;
+  var st = STAGES[S.stage], q = st.quiz[S.qi];
+  var box = el('choiceBox');
+  var btns = box.querySelectorAll('.choice');
+  var fb = el('fbSlot');
+
+  if (i === q.a){
+    S.locked = true;
+    sfx('ok');
+    btns[i].insertAdjacentHTML('beforeend', MARU);
+    for (var k = 0; k < btns.length; k++){ if (k !== i) btns[k].classList.add('dim'); }
+    fb.innerHTML = '<div class="fb ok"><p class="h">'
+      + '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 12.5l5.2 5.2L20 7" stroke="#2f9e8f" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      + 'せいかい！</p><p>' + q.ok + '</p></div>';
+    if (S.tries === 0) S.firstTry++;
+    if (S.tries > 0) S.wrong[st.id] = (S.wrong[st.id] || 0);
+    S.answered++;
+    save();
+    finishQuestion();
+  } else {
+    S.tries++;
+    sfx('ng');
+    btns[i].classList.add('bad');
+    setTimeout(function(){ btns[i].classList.add('dim'); }, 400);
+    S.wrong[st.id] = (S.wrong[st.id] || 0) + 1;
+    save();
+    if (S.tries >= 2){
+      S.locked = true;
+      btns[q.a].insertAdjacentHTML('beforeend', MARU);
+      for (var m = 0; m < btns.length; m++){
+        if (m !== q.a) btns[m].classList.add('dim');
+        else btns[m].style.opacity = '1';
+      }
+      btns[q.a].style.boxShadow = '0 0 0 4px rgba(47,158,143,.35), 0 5px 0 var(--ink-12)';
+      fb.innerHTML = '<div class="fb tip"><p class="h">だいじょうぶ、いっしょに かくにんしよう</p>'
+        + '<p>' + q.hint + '</p><p style="margin-top:8px"><b>こたえは「' + stripTags(q.ch[q.a]) + '」</b>だよ。'
+        + 'なぜ そう なるか、もう いちど 読んで みよう。</p></div>';
+      finishQuestion();
+    } else {
+      fb.innerHTML = '<div class="fb ng"><p class="h">おしい！</p><p>' + q.ng + '</p>'
+        + '<p style="margin-top:6px;font-size:.92rem;color:var(--ink-60)">もう いちど えらんで みよう。</p></div>';
+    }
+  }
+}
+
+function finishQuestion(){
+  var st = STAGES[S.stage];
+  var last = (S.qi >= st.quiz.length - 1);
+  var label = last ? (st.boss ? 'けっか を 見る' : 'ステージ クリアへ') : 'つぎの もんだいへ';
+  el('nextSlot').innerHTML = '<button class="btn ' + (st.boss ? 'boss' : 'gogo')
+    + '" type="button" id="nextQ" style="margin-top:14px">' + label + '</button>';
+  el('nextQ').addEventListener('click', function(){
+    sfx('tap');
+    if (last){
+      S.done[st.id] = true;
+      if (S.qi === st.quiz.length - 1){
+        S.stage = (S.stage + 1) % N_STAGE;
+        S.qi = 0; S.tries = 0; S.locked = false;
+      }
+      save();
+      if (st.boss){ const c = clearedCount(); if (c >= N_STAGE) confetti(140); sfx('clear'); VIEW = 'result'; }
+      else { confetti(90); sfx('clear'); VIEW = 'clear'; }
+    } else {
+      S.qi++; S.tries = 0; S.locked = false;
+    }
+    render();
+  });
+}
+
+function viewClear(){
+  var st = STAGES[S.stage === 0 ? N_STAGE - 1 : S.stage - 1];
+  var h = '<div class="card" style="text-align:center">'
+    + '<span class="eyebrow mizu">ステージ クリア</span>'
+    + '<h1 style="color:var(--mizu)">' + st.clear + '</h1>'
+    + '<p class="lead">⭐ を 1つ ゲット！</p>'
+    + '<p class="sub">いま ' + clearedCount() + ' / ' + N_STAGE + ' ステージ クリア</p>'
+    + '</div>';
+  h += '<button class="btn gogo" type="button" id="nextStage">つぎの ステージへ</button>'
+     + '<button class="btn ghost sm" type="button" id="toHome" style="margin-top:12px">マップに もどる</button>';
+  return h;
+}
+
+function viewResult(){
+  var c = clearedCount();
+  var weak = [];
+  for (var i = 0; i < STAGES.length; i++){ if (S.wrong[STAGES[i].id] > 0) weak.push(STAGES[i]); }
+  var h = '<div class="card">'
+    + '<span class="eyebrow shu">たんけん けっか</span>'
+    + '<h1>おつかれさま！</h1>'
+    + '<p class="lead">きみが 1人で さいごまで たどりついた けっかは、これ。</p>'
+    + '<p style="font-family:var(--font-num);font-size:1.05rem">'
+    + 'クリア ステージ：<b>' + c + ' / ' + N_STAGE + '</b><br>'
+    + 'いちどで せいかい：<b>' + S.firstTry + ' / ' + TOTAL_Q + ' もん</b></p>'
+    + '</div>';
+
+  if (weak.length === 0){
+    h += '<div class="judge" style="border-color:var(--mizu);background:rgba(47,158,143,.06)">'
+      + '<p class="big" style="color:var(--mizu)">にがて ゼロ！</p>'
+      + '<p>どの ステージも ばっちり でした。すごい！</p></div>';
+  } else {
+    h += '<div class="judge">'
+      + '<p class="big">きみの にがては ここだよ</p>'
+      + '<p>つまずいた ステージだけ、もう いちど やってみよう。'
+      + 'そこが なおると、わり算が ぐっと ラクに なるよ。</p></div>';
+    h += '<div class="tags">';
+    for (var j = 0; j < STAGES.length; j++){
+      var st = STAGES[j];
+      h += '<span class="tag ' + (S.wrong[st.id] > 0 ? 'hit' : 'free') + '">'
+         + (S.wrong[st.id] > 0 ? '✗ ' : '✓ ') + st.title + '</span>';
+    }
+    h += '</div>';
+    h += '<div style="margin-top:10px">';
+    for (var k = 0; k < weak.length; k++){
+      h += '<button class="btn sm" type="button" data-go="' + STAGES.indexOf(weak[k]) + '" style="margin-bottom:10px">'
+         + '「' + weak[k].title + '」を もう いちど</button>';
+    }
+    h += '</div>';
+  }
+  h += '<button class="btn primary" type="button" id="toHome" style="margin-top:8px">マップに もどる</button>';
+  return h;
+}
+
+function viewAdult(){
+  var h = '<div class="card">'
+    + '<span class="eyebrow">おとなの人へ</span>'
+    + '<h2>つかいかた</h2>'
+    + '<p>この画面は、お子さんが<b>1人で</b>すすめる ように 作って あります。'
+    + 'キーボード入力は いっさい なく、ぜんぶ えらぶ だけ。'
+    + 'まちがえても 2回で かならず 答えと 説明に たどりつく ので、'
+    + '「わからない まま 止まる」ことが ありません。</p>'
+    + '<h4>7つの ステージ＝7つの つまずきポイント</h4>'
+    + '<div class="legend">'
+    + '<div><b>1</b><span>九九の ぎゃくひき（わり算の 答えを 九九から さがす）＋ 2けた×1けたの 暗算</span></div>'
+    + '<div><b>2</b><span>商を たてる ばしょ（「いちばん 左」では ない／指かくし法）</span></div>'
+    + '<div><b>3</b><span>見当づけ＝かりの商（概数に おきかえる）</span></div>'
+    + '<div><b>4</b><span>たてた商を かける（くりあがりメモ）</span></div>'
+    + '<div><b>5</b><span>手じゅんと 書く ばしょ（たてる→かける→ひく→おろす／マル作戦）</span></div>'
+    + '<div><b>6</b><span>うまく いかない ときの なおし方（商を 小さく／大きく）</span></div>'
+    + '<div><b>7</b><span>あまり ＜ わる数 の かくにん</span></div>'
+    + '</div>'
+    + '<h4>けっか画面の 見かた</h4>'
+    + '<ul>'
+    + '<li><b>赤いタグ</b>＝ つまずきが あった ステージ。ここを 1つ つぶすだけで 先が ラクに なります。</li>'
+    + '<li>お子さん自身には「どの ステージが あか だった？」と 聞く より、'
+    + '「<b>もう いちど やってみる？</b>」と ボタンを いっしょに 押して あげる ほうが 進みます。</li>'
+    + '<li>答えを まだ 書く 前に「<b>いま 何を する ところ？</b>」と 聞くと、'
+    + '手じゅんが 入って いるか が わかります。</li>'
+    + '</ul>'
+    + '<h4>進みが おそい・くりかえし まちがえる とき</h4>'
+    + '<p>九九の 自動化が 4年生で まだ の 場合は、'
+    + 'この画面を くりかえす だけで かなり 変わります。'
+    + 'ただ、<b>数の 大小・位取り が 繰り返し 崩れる／計算以外は 問題ない／'
+    + '長期間・広い 範囲で 続く</b> という ときは、'
+    + '<b>通級指導教室の コーディネーターや スクールカウンセラー</b>に 一度 つないで みてください。'
+    + '算数障害（ディスカリキュリア）は 努力不足 では ありません。</p>'
+    + '<h4>出典</h4>'
+    + '<ul>'
+    + '<li><a href="https://benesse.jp/zemi/zemihogo/sho/20240801-3.html" target="_blank" rel="noopener">ベネッセ教育情報「2けたでわるわり算の筆算」のつまずき解消法</a></li>'
+    + '<li><a href="https://tutor.zushiki-edu.com/" target="_blank" rel="noopener">図式教育：わり算の筆算 手順別のつまずきと回避法</a></li>'
+    + '<li><a href="https://cocreco.kodansha.co.jp/cocreco/general/study/m89EH" target="_blank" rel="noopener">コクリコ（講談社）：小学4〜6年 算数のつまずき</a></li>'
+    + '<li><a href="https://www.ixcoach.com/ja/practices/cognitive-load-theory" target="_blank" rel="noopener">認知負荷理論とワーキングメモリ</a></li>'
+    + '</ul>'
+    + '<button class="btn ghost sm" type="button" id="toHome" style="margin-top:14px">もどる</button>'
+    + '</div>';
+  return h;
+}
+
+/* ============================================================
+   画面遷移
+   ============================================================ */
+var VIEW = 'home';
+
+function goHome(){ VIEW = 'home'; render(); }
+function goIntro(i){ S.stage = i; S.qi = 0; S.tries = 0; S.locked = false; VIEW = 'intro'; render(); }
+function goQuiz(){ S.qi = 0; S.tries = 0; S.locked = false; VIEW = 'quiz'; render(); }
+
+document.addEventListener('click', function(e){
+  var t = e.target.closest ? e.target.closest('[data-go]') : null;
+  if (t){ sfx('tap'); goIntro(parseInt(t.getAttribute('data-go'), 10)); return; }
+  var id = e.target.closest ? e.target.closest('button') : null;
+  if (!id) return;
+  var bid = id.id;
+  if (bid === 'startBtn'){
+    sfx('tap');
+    var first = -1;
+    for (var i = 0; i < N_STAGE; i++){ if (!S.done[STAGES[i].id]){ first = i; break; } }
+    goIntro(first < 0 ? 0 : first);
+  }
+  else if (bid === 'toQuiz'){ sfx('tap'); goQuiz(); }
+  else if (bid === 'toHome'){ sfx('tap'); goHome(); }
+  else if (bid === 'nextStage'){ sfx('tap'); goIntro(S.stage); }
+  else if (bid === 'resBtn'){ sfx('tap'); VIEW = 'result'; render(); }
+});
+
+el('sndBtn').addEventListener('click', function(){
+  soundOn = !soundOn; if (soundOn) sfx('tap'); updateHUD();
+});
+el('resetBtn').addEventListener('click', function(){
+  if (!window.confirm('さいしょから やりなおしますか？（⭐ と けっかが 消えます）')) return;
+  S = { stage:0, qi:0, tries:0, locked:false, done:{}, wrong:{}, answered:0, firstTry:0 };
+  try { localStorage.removeItem(KEY); } catch(e){}
+  parts.length = 0; VIEW = 'home'; render();
+});
+el('adultBtn').addEventListener('click', function(){ sfx('tap'); VIEW = 'adult'; render(); });
+
+/* ---------- 起動 ---------- */
+load();
+(function init(){
+  /* 絵文字を アイコンに 置きかえる */
+  el('sndBtn').innerHTML = ICON_SOUND_ON;
+  el('resetBtn').innerHTML = ICON_RESET;
+  el('starPill').innerHTML = ICON_STAR + ' 0/' + N_STAGE;
+
+  var hash = (location.hash || '').replace('#', '');
+  if (/^s[0-9]$/.test(hash)){
+    var n = parseInt(hash.slice(1), 10);
+    if (n >= 0 && n < N_STAGE){ S.stage = n; VIEW = 'quiz'; }
+  } else if (hash === 'intro'){ VIEW = 'intro'; }
+  else if (hash === 'result'){ VIEW = 'result'; }
+  else if (hash === 'adult'){ VIEW = 'adult'; }
+  render();
+  window.addEventListener('hashchange', function(){
+    var hh = (location.hash || '').replace('#', '');
+    if (/^s[0-9]$/.test(hh)){ var m = parseInt(hh.slice(1), 10); if (m < N_STAGE){ goQuiz.call(null, S.stage = m); } }
+  });
+})();
+
+/* テスト用に 画面を 直接 ひらく */
+window.__view = function(v, i){ if (typeof i === 'number') S.stage = i; VIEW = v; render(); };
+</script>
+</body>
+</html>
